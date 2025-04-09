@@ -1,24 +1,22 @@
 "use client";
 
-import { useArweave } from '../components/ArweaveHandler';
+import {
+  spawn,
+  message,
+  createDataItemSigner,
+  createSigner
+} from "@permaweb/aoconnect";
 
 // Arweave Documentation
-const AOModule: string = "Do_Uc2Sju_ffp6Ev0AnLVdPtot15rvMjP-a9VVaA5fM"; // aos 2.0.1
-const AOScheduler: string = "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA";
-
-interface Tag {
-  name: string;
-  value: string;
-}
-
-const CommonTags: Tag[] = [
+const AOModule = "Do_Uc2Sju_ffp6Ev0AnLVdPtot15rvMjP-a9VVaA5fM"; // aos 2.0.1
+const AOScheduler = "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA";
+const CommonTags = [
   { name: "Name", value: "Anon" },
   { name: "Version", value: "0.2.1" },
 ];
 
 declare global {
   interface Window {
-    arweave: any;
     arweaveWallet: {
       connect: (permissions: string[], appInfo: { name: string; logo: string }, gateway?: {
         host: string;
@@ -29,27 +27,15 @@ declare global {
       getActiveAddress: () => Promise<string>;
     };
   }
-
-  interface globalThis {
-    arweaveWallet?: Window['arweaveWallet'];
-  }
 }
 
-// Check if Arweave is properly initialized
-const checkArweaveInitialized = () => {
-  if (typeof window === 'undefined') return false;
-  if (!window.arweave) return false;
-  if (!window.arweaveWallet) return false;
-  return true;
-};
-
 // connect wallet
-export const connectWallet = async (): Promise<void> => {
-  if (!checkArweaveInitialized()) {
-    throw new Error('Arweave not properly initialized. Please wait for initialization to complete.');
-  }
-  
+export async function connectWallet() {
   try {
+    if (!window.arweaveWallet) {
+      alert('No Arconnect detected');
+      return;
+    }
     await window.arweaveWallet.connect(
       ['ACCESS_ADDRESS', 'SIGN_TRANSACTION', 'ACCESS_TOKENS'],
       {
@@ -62,57 +48,41 @@ export const connectWallet = async (): Promise<void> => {
         protocol: 'https',
       }
     );
-    window.dispatchEvent(new Event("wallet-connected"));
   } catch (error) {
-    console.error("Failed to connect wallet:", error);
-    throw error;
+    console.error(error);
+  } finally {
+    console.log('connection finished execution');
   }
-};
+}
 
 // disconnect wallet
-export async function disconnectWallet(): Promise<void> {
-  if (!checkArweaveInitialized()) {
-    throw new Error('Arweave not properly initialized');
-  }
+export async function disconnectWallet() {
   return await window.arweaveWallet.disconnect();
 }
 
 // get wallet details
-export const getWalletAddress = async (): Promise<string> => {
-  if (!checkArweaveInitialized()) {
-    throw new Error('Arweave not properly initialized');
-  }
-  
-  try {
-    const walletAddress = await window.arweaveWallet.getActiveAddress();
-    console.log(walletAddress);
-    window.dispatchEvent(new Event("wallet-connected"));
-    return walletAddress;
-  } catch (error) {
-    window.dispatchEvent(new Event("wallet-disconnected"));
-    throw error;
-  }
-};
+export async function getWalletAddress() {
+  const walletAddress = await window.arweaveWallet.getActiveAddress();
+  console.log(walletAddress);
+  return walletAddress;
+}
 
 // spawn process
-export const spawnProcess = async (name: string, tags: Tag[] = []): Promise<string> => {
-  if (!checkArweaveInitialized()) {
-    throw new Error('Arweave not properly initialized');
-  }
-  
+export const spawnProcess = async (name: string, tags: any[] = []) => {
   try {
-    const allTags: Tag[] = [...CommonTags, ...tags];
+    const allTags = [...CommonTags, ...tags];
     if (name) {
       allTags.push({ name: "Name", value: name });
     }
 
     console.log(allTags);
     
-    const signer = window.arweave.createDataItemSigner(window.arweaveWallet);
-    const processId = await window.arweave.spawn({
+    const signi = await getWalletAddress(); 
+    console.log(signi);
+    const processId = await spawn({
       module: AOModule,
       scheduler: AOScheduler,
-      signer,
+      signer: createDataItemSigner(window.arweaveWallet),
       tags: allTags
     });
     console.log(processId);
@@ -125,30 +95,18 @@ export const spawnProcess = async (name: string, tags: Tag[] = []): Promise<stri
 };
 
 // send message to process
-interface MessageParams {
-  tags?: Tag[];
-  data: string;
-  anchor?: string;
-  process: string;
-}
-
-export const messageAR = async ({ tags = [], data, anchor = '', process }: MessageParams): Promise<string> => {
-  if (!checkArweaveInitialized()) {
-    throw new Error('Arweave not properly initialized');
-  }
-  
+export const messageAR = async ({ tags = [], data, anchor = '', process }: any) => {
   try {
     if (!process) throw new Error("Process ID is required.");
     if (!data) throw new Error("Data is required.");
 
     const allTags = [...CommonTags, ...tags];
-    const signer = window.arweave.createDataItemSigner(window.arweaveWallet);
-    const messageId = await window.arweave.message({
+    const messageId = await message({
       data,
       anchor,
       process,
       tags: allTags,
-      signer
+      signer: createDataItemSigner(window.arweaveWallet)
     });
     return messageId;
   } catch (error) {
@@ -156,6 +114,3 @@ export const messageAR = async ({ tags = [], data, anchor = '', process }: Messa
     throw error;
   }
 };
-
-// Export the Arweave hook for components to use
-export { useArweave };
