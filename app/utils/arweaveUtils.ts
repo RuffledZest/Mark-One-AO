@@ -20,6 +20,7 @@ declare global {
       disconnect: () => Promise<void>;
       getActiveAddress: () => Promise<string>;
       signTransaction: (transaction: any) => Promise<any>;
+      sign: (transaction: any) => Promise<any>;
     };
     Arweave: any;
   }
@@ -107,11 +108,14 @@ export const spawnProcess = async (name: string, tags: any[] = []): Promise<stri
       tags: allTags
     });
 
-    // Sign the transaction
-    await window.arweaveWallet.signTransaction(transaction);
+    // Sign the transaction using the correct method
+    const signedTransaction = await window.arweaveWallet.sign(transaction);
+    if (!signedTransaction) {
+      throw new Error('Failed to sign transaction');
+    }
 
     // Post the transaction
-    const response = await arweave.transactions.post(transaction);
+    const response = await arweave.transactions.post(signedTransaction);
     console.log('Transaction posted:', response);
 
     return response.id || '';
