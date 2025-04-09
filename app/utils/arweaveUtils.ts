@@ -23,29 +23,36 @@ const initializeAoconnect = async () => {
   if (isInitializing) return initPromise;
   
   isInitializing = true;
-  initPromise = import('@permaweb/aoconnect').then((module) => {
+  try {
+    const module = await import(/* webpackChunkName: "aoconnect" */ '@permaweb/aoconnect');
     aoconnect = module.connect({
       MODE: "mainnet",
       MU_URL: "https://mu.ao-testnet.xyz",
       CU_URL: "https://cu.ao-testnet.xyz",
       GATEWAY_URL: "https://arweave.net"
     });
-  }).catch((error) => {
+    isInitializing = false;
+    return;
+  } catch (error) {
     console.error('Failed to load aoconnect:', error);
     isInitializing = false;
     initPromise = null;
-  });
-  
-  return initPromise;
+    throw error;
+  }
 };
 
 // Ensure aoconnect is initialized before use
 const ensureAoconnect = async () => {
   if (!aoconnect) {
-    await initializeAoconnect();
+    try {
+      await initializeAoconnect();
+    } catch (error) {
+      console.error('Failed to initialize aoconnect:', error);
+      throw new Error('Failed to initialize aoconnect');
+    }
   }
   if (!aoconnect) {
-    throw new Error('Failed to initialize aoconnect');
+    throw new Error('aoconnect not initialized');
   }
 };
 
