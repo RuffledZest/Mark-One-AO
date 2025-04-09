@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useArweaveScript } from './ArweaveScript';
 
 export const useArweave = () => {
   const { isLoaded, error: scriptError } = useArweaveScript();
-  const [error, setError] = useState<Error | null>(null);
 
   const spawnProcess = useCallback(async (name: string, tags: any[] = []) => {
+    if (typeof window === 'undefined') return '';
     if (!isLoaded) {
       throw new Error('aoconnect not loaded');
     }
@@ -38,6 +38,7 @@ export const useArweave = () => {
   }, [isLoaded]);
 
   const messageAR = useCallback(async ({ tags = [], data, anchor = '', process }: any) => {
+    if (typeof window === 'undefined') return '';
     if (!isLoaded) {
       throw new Error('aoconnect not loaded');
     }
@@ -70,7 +71,7 @@ export const useArweave = () => {
 
   return {
     isLoaded,
-    error: scriptError || error,
+    error: scriptError,
     spawnProcess,
     messageAR
   };
