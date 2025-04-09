@@ -14,10 +14,16 @@ const CommonTags: Tag[] = [
 
 // Initialize aoconnect only on the client side
 let aoconnect: any = null;
+let isInitializing = false;
+let initPromise: Promise<void> | null = null;
 
-if (typeof window !== 'undefined') {
-  // Use dynamic import to ensure proper loading
-  import('@permaweb/aoconnect').then((module) => {
+const initializeAoconnect = async () => {
+  if (typeof window === 'undefined') return;
+  if (aoconnect) return;
+  if (isInitializing) return initPromise;
+  
+  isInitializing = true;
+  initPromise = import('@permaweb/aoconnect').then((module) => {
     aoconnect = module.connect({
       MODE: "mainnet",
       MU_URL: "https://mu.ao-testnet.xyz",
@@ -26,8 +32,22 @@ if (typeof window !== 'undefined') {
     });
   }).catch((error) => {
     console.error('Failed to load aoconnect:', error);
+    isInitializing = false;
+    initPromise = null;
   });
-}
+  
+  return initPromise;
+};
+
+// Ensure aoconnect is initialized before use
+const ensureAoconnect = async () => {
+  if (!aoconnect) {
+    await initializeAoconnect();
+  }
+  if (!aoconnect) {
+    throw new Error('Failed to initialize aoconnect');
+  }
+};
 
 declare global {
   interface Window {
@@ -99,9 +119,7 @@ export const getWalletAddress = async (): Promise<string> => {
 // spawn process
 export const spawnProcess = async (name: string, tags: Tag[] = []): Promise<string> => {
   if (typeof window === 'undefined') return '';
-  if (!aoconnect) {
-    throw new Error('aoconnect not initialized');
-  }
+  await ensureAoconnect();
   
   try {
     const allTags: Tag[] = [...CommonTags, ...tags];
@@ -138,9 +156,7 @@ interface MessageParams {
 
 export const messageAR = async ({ tags = [], data, anchor = '', process }: MessageParams): Promise<string> => {
   if (typeof window === 'undefined') return '';
-  if (!aoconnect) {
-    throw new Error('aoconnect not initialized');
-  }
+  await ensureAoconnect();
   
   try {
     if (!process) throw new Error("Process ID is required.");
