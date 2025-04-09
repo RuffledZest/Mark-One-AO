@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 
 declare global {
   interface Window {
-    arweave: any;
+    arweave : any;
+    Arweave: any;
   }
 }
 
@@ -16,7 +17,7 @@ export const useArweaveScript = () => {
     if (typeof window.arweaveWallet === 'undefined') return;
 
     const loadScript = () => {
-      if (window.arweave) {
+      if (window.Arweave) {
         setIsLoaded(true);
         return;
       }
@@ -27,12 +28,22 @@ export const useArweaveScript = () => {
       
       script.onload = () => {
         try {
-          window.arweave = window.arweave.connect({
+          // Initialize Arweave
+          const arweave = new window.Arweave({
+            host: 'arweave.net',
+            port: 443,
+            protocol: 'https'
+          });
+
+          // Set up AO specific configuration
+          window.arweave = arweave;
+          window.arweave.connect = () => ({
             MODE: "mainnet",
             MU_URL: "https://mu.ao-testnet.xyz",
             CU_URL: "https://cu.ao-testnet.xyz",
             GATEWAY_URL: "https://arweave.net"
           });
+
           setIsLoaded(true);
         } catch (err) {
           console.error('Error initializing arweave:', err);

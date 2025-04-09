@@ -35,15 +35,21 @@ declare global {
   }
 }
 
+// Check if Arweave is properly initialized
+const checkArweaveInitialized = () => {
+  if (typeof window === 'undefined') return false;
+  if (!window.arweave) return false;
+  if (!window.arweaveWallet) return false;
+  return true;
+};
+
 // connect wallet
 export const connectWallet = async (): Promise<void> => {
-  if (typeof window === 'undefined') return;
+  if (!checkArweaveInitialized()) {
+    throw new Error('Arweave not properly initialized. Please wait for initialization to complete.');
+  }
   
   try {
-    if (!window.arweaveWallet) {
-      alert('No Arconnect detected');
-      return;
-    }
     await window.arweaveWallet.connect(
       ['ACCESS_ADDRESS', 'SIGN_TRANSACTION', 'ACCESS_TOKENS'],
       {
@@ -65,13 +71,17 @@ export const connectWallet = async (): Promise<void> => {
 
 // disconnect wallet
 export async function disconnectWallet(): Promise<void> {
-  if (typeof window === 'undefined') return;
+  if (!checkArweaveInitialized()) {
+    throw new Error('Arweave not properly initialized');
+  }
   return await window.arweaveWallet.disconnect();
 }
 
 // get wallet details
 export const getWalletAddress = async (): Promise<string> => {
-  if (typeof window === 'undefined') return '';
+  if (!checkArweaveInitialized()) {
+    throw new Error('Arweave not properly initialized');
+  }
   
   try {
     const walletAddress = await window.arweaveWallet.getActiveAddress();
@@ -86,8 +96,9 @@ export const getWalletAddress = async (): Promise<string> => {
 
 // spawn process
 export const spawnProcess = async (name: string, tags: Tag[] = []): Promise<string> => {
-  if (typeof window === 'undefined') return '';
-  if (!window.arweave) throw new Error('Arweave not initialized');
+  if (!checkArweaveInitialized()) {
+    throw new Error('Arweave not properly initialized');
+  }
   
   try {
     const allTags: Tag[] = [...CommonTags, ...tags];
@@ -122,8 +133,9 @@ interface MessageParams {
 }
 
 export const messageAR = async ({ tags = [], data, anchor = '', process }: MessageParams): Promise<string> => {
-  if (typeof window === 'undefined') return '';
-  if (!window.arweave) throw new Error('Arweave not initialized');
+  if (!checkArweaveInitialized()) {
+    throw new Error('Arweave not properly initialized');
+  }
   
   try {
     if (!process) throw new Error("Process ID is required.");
