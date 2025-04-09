@@ -21,20 +21,9 @@ declare global {
       }) => Promise<void>;
       disconnect: () => Promise<void>;
       getActiveAddress: () => Promise<string>;
-      spawn: (options: {
-        module: string;
-        scheduler: string;
-        signer: any;
-        tags: any[];
-      }) => Promise<string>;
-      message: (options: {
-        data: string;
-        anchor?: string;
-        process: string;
-        tags: any[];
-        signer: any;
-      }) => Promise<string>;
+      signTransaction: (transaction: any) => Promise<any>;
     };
+    Arweave: any;
   }
 }
 
@@ -114,15 +103,27 @@ export const spawnProcess = async (name: string, tags: any[] = []) => {
     
     const signi = await getWalletAddress(); 
     console.log(signi);
-    const processId = await window.arweaveWallet.spawn({
-      module: AOModule,
-      scheduler: AOScheduler,
-      signer: window.arweaveWallet,
+
+    // Create a transaction
+    const arweave = new window.Arweave({
+      host: 'arweave.net',
+      port: 443,
+      protocol: 'https'
+    });
+
+    const transaction = await arweave.createTransaction({
+      data: '',
       tags: allTags
     });
-    console.log(processId);
 
-    return processId;
+    // Sign the transaction
+    await window.arweaveWallet.signTransaction(transaction);
+
+    // Post the transaction
+    const response = await arweave.transactions.post(transaction);
+    console.log('Transaction posted:', response);
+
+    return response.id;
   } catch (error) {
     console.error("Error spawning process:", error);
     return '';
@@ -148,14 +149,25 @@ export const messageAR = async ({ tags = [], data, anchor = '', process }: any) 
     }
 
     const allTags = [...CommonTags, ...tags];
-    const messageId = await window.arweaveWallet.message({
-      data,
-      anchor,
-      process,
-      tags: allTags,
-      signer: window.arweaveWallet
+    const arweave = new window.Arweave({
+      host: 'arweave.net',
+      port: 443,
+      protocol: 'https'
     });
-    return messageId;
+
+    const transaction = await arweave.createTransaction({
+      data: data,
+      tags: allTags
+    });
+
+    // Sign the transaction
+    await window.arweaveWallet.signTransaction(transaction);
+
+    // Post the transaction
+    const response = await arweave.transactions.post(transaction);
+    console.log('Message sent:', response);
+
+    return response.id;
   } catch (error) {
     console.error("Error sending message:", error);
     return '';
