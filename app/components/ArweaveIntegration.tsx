@@ -59,7 +59,9 @@ const ArweaveIntegration = () => {
     if (!isClient) return;
     try {
       const newProcessId = await spawnProcess('CanvasNotesApp');
-      setProcessId(newProcessId);
+      if (newProcessId) {
+        setProcessId(newProcessId);
+      }
     } catch (error) {
       console.error("Error spawning process:", error);
     }
