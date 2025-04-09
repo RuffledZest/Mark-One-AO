@@ -1,40 +1,15 @@
 "use client";
 
 import { useEffect, useState, useCallback } from 'react';
-
-let aoconnect: any = null;
+import { useArweaveScript } from './ArweaveScript';
 
 export const useArweave = () => {
-  const [isInitialized, setIsInitialized] = useState(false);
+  const { isLoaded, error: scriptError } = useArweaveScript();
   const [error, setError] = useState<Error | null>(null);
 
-  const initialize = useCallback(async () => {
-    if (aoconnect) return;
-    
-    try {
-      const { connect } = await import(/* webpackChunkName: "aoconnect" */ '@permaweb/aoconnect');
-      aoconnect = connect({
-        MODE: "mainnet",
-        MU_URL: "https://mu.ao-testnet.xyz",
-        CU_URL: "https://cu.ao-testnet.xyz",
-        GATEWAY_URL: "https://arweave.net"
-      });
-      setIsInitialized(true);
-    } catch (err) {
-      console.error('Failed to load aoconnect:', err);
-      setError(err as Error);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      initialize();
-    }
-  }, [initialize]);
-
   const spawnProcess = useCallback(async (name: string, tags: any[] = []) => {
-    if (!aoconnect) {
-      await initialize();
+    if (!isLoaded) {
+      throw new Error('aoconnect not loaded');
     }
     
     try {
@@ -47,8 +22,8 @@ export const useArweave = () => {
         allTags.push({ name: "Name", value: name });
       }
 
-      const signer = aoconnect.createDataItemSigner(window.arweaveWallet);
-      const processId = await aoconnect.spawn({
+      const signer = window.aoconnect.createDataItemSigner(window.arweaveWallet);
+      const processId = await window.aoconnect.spawn({
         module: "Do_Uc2Sju_ffp6Ev0AnLVdPtot15rvMjP-a9VVaA5fM",
         scheduler: "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA",
         signer,
@@ -60,11 +35,11 @@ export const useArweave = () => {
       console.error("Error spawning process:", error);
       throw error;
     }
-  }, [initialize]);
+  }, [isLoaded]);
 
   const messageAR = useCallback(async ({ tags = [], data, anchor = '', process }: any) => {
-    if (!aoconnect) {
-      await initialize();
+    if (!isLoaded) {
+      throw new Error('aoconnect not loaded');
     }
     
     try {
@@ -77,8 +52,8 @@ export const useArweave = () => {
         ...tags
       ];
 
-      const signer = aoconnect.createDataItemSigner(window.arweaveWallet);
-      const messageId = await aoconnect.message({
+      const signer = window.aoconnect.createDataItemSigner(window.arweaveWallet);
+      const messageId = await window.aoconnect.message({
         data,
         anchor,
         process,
@@ -91,11 +66,11 @@ export const useArweave = () => {
       console.error("Error sending message:", error);
       throw error;
     }
-  }, [initialize]);
+  }, [isLoaded]);
 
   return {
-    isInitialized,
-    error,
+    isLoaded,
+    error: scriptError || error,
     spawnProcess,
     messageAR
   };
