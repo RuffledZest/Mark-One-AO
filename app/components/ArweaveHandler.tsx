@@ -7,7 +7,7 @@ export const useArweave = () => {
   const { isLoaded, error: scriptError } = useArweaveScript();
 
   const spawnProcess = useCallback(async (name: string, tags: any[] = []) => {
-    if (typeof window === 'undefined') return '';
+    if (typeof window.arweaveWallet === 'undefined') return ;
     if (!isLoaded) {
       throw new Error('aoconnect not loaded');
     }
