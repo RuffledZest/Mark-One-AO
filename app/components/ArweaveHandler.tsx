@@ -9,7 +9,7 @@ export const useArweave = () => {
   const spawnProcess = useCallback(async (name: string, tags: any[] = []) => {
     if (typeof window.arweaveWallet === 'undefined') return ;
     if (!isLoaded) {
-      throw new Error('aoconnect not loaded');
+      throw new Error('arweave not loaded');
     }
     
     try {
@@ -22,8 +22,8 @@ export const useArweave = () => {
         allTags.push({ name: "Name", value: name });
       }
 
-      const signer = window.aoconnect.createDataItemSigner(window.arweaveWallet);
-      const processId = await window.aoconnect.spawn({
+      const signer = window.arweave.createDataItemSigner(window.arweaveWallet);
+      const processId = await window.arweave.spawn({
         module: "Do_Uc2Sju_ffp6Ev0AnLVdPtot15rvMjP-a9VVaA5fM",
         scheduler: "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA",
         signer,
@@ -38,9 +38,9 @@ export const useArweave = () => {
   }, [isLoaded]);
 
   const messageAR = useCallback(async ({ tags = [], data, anchor = '', process }: any) => {
-    if (typeof window === 'undefined') return '';
+    if (typeof window.arweaveWallet === 'undefined') return ;
     if (!isLoaded) {
-      throw new Error('aoconnect not loaded');
+      throw new Error('arweave not loaded');
     }
     
     try {
@@ -53,8 +53,8 @@ export const useArweave = () => {
         ...tags
       ];
 
-      const signer = window.aoconnect.createDataItemSigner(window.arweaveWallet);
-      const messageId = await window.aoconnect.message({
+      const signer = window.arweave.createDataItemSigner(window.arweaveWallet);
+      const messageId = await window.arweave.message({
         data,
         anchor,
         process,

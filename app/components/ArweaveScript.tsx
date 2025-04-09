@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 declare global {
   interface Window {
-    aoconnect: any;
+    arweave: any;
   }
 }
 
@@ -13,10 +13,10 @@ export const useArweaveScript = () => {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window.arweaveWallet === 'undefined') return;
 
     const loadScript = () => {
-      if (window.aoconnect) {
+      if (window.arweave) {
         setIsLoaded(true);
         return;
       }
@@ -27,7 +27,7 @@ export const useArweaveScript = () => {
       
       script.onload = () => {
         try {
-          window.aoconnect = window.aoconnect.connect({
+          window.arweave = window.arweave.connect({
             MODE: "mainnet",
             MU_URL: "https://mu.ao-testnet.xyz",
             CU_URL: "https://cu.ao-testnet.xyz",
@@ -35,14 +35,14 @@ export const useArweaveScript = () => {
           });
           setIsLoaded(true);
         } catch (err) {
-          console.error('Error initializing aoconnect:', err);
+          console.error('Error initializing arweave:', err);
           setError(err as Error);
         }
       };
 
       script.onerror = (err) => {
-        console.error('Failed to load aoconnect script:', err);
-        setError(new Error('Failed to load aoconnect script'));
+        console.error('Failed to load arweave script:', err);
+        setError(new Error('Failed to load arweave script'));
       };
 
       document.body.appendChild(script);
