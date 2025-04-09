@@ -18,7 +18,12 @@ let aoconnect: any = null;
 if (typeof window !== 'undefined') {
   // Use dynamic import to ensure proper loading
   import('@permaweb/aoconnect').then((module) => {
-    aoconnect = module.connect();
+    aoconnect = module.connect({
+      MODE: "mainnet",
+      MU_URL: "https://mu.ao-testnet.xyz",
+      CU_URL: "https://cu.ao-testnet.xyz",
+      GATEWAY_URL: "https://arweave.net"
+    });
   }).catch((error) => {
     console.error('Failed to load aoconnect:', error);
   });
