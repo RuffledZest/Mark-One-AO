@@ -91,7 +91,7 @@ export const spawnProcess = async (name: string, tags: any[] = []): Promise<stri
     const signi = await getWalletAddress(); 
     console.log(signi);
 
-    // Create a transaction
+    // Create a transaction with required data
     const arweave = new window.Arweave({
       host: 'arweave.net',
       port: 443,
@@ -99,7 +99,11 @@ export const spawnProcess = async (name: string, tags: any[] = []): Promise<stri
     });
 
     const transaction = await arweave.createTransaction({
-      data: '',
+      data: JSON.stringify({
+        type: 'process',
+        name: name,
+        timestamp: Date.now()
+      }),
       tags: allTags
     });
 
