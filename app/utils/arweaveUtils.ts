@@ -12,12 +12,16 @@ const CommonTags: Tag[] = [
   { name: "Version", value: "0.2.1" },
 ];
 
-// Only import and use aoconnect on the client side
+// Initialize aoconnect only on the client side
 let aoconnect: any = null;
 
 if (typeof window !== 'undefined') {
-  const { connect } = require('@permaweb/aoconnect');
-  aoconnect = connect();
+  // Use dynamic import to ensure proper loading
+  import('@permaweb/aoconnect').then((module) => {
+    aoconnect = module.connect();
+  }).catch((error) => {
+    console.error('Failed to load aoconnect:', error);
+  });
 }
 
 declare global {
@@ -87,9 +91,12 @@ export const getWalletAddress = async (): Promise<string> => {
   }
 };
 
-// spawn process [ don't change anything in the function use it as it is *important]
+// spawn process
 export const spawnProcess = async (name: string, tags: Tag[] = []): Promise<string> => {
   if (typeof window === 'undefined') return '';
+  if (!aoconnect) {
+    throw new Error('aoconnect not initialized');
+  }
   
   try {
     const allTags: Tag[] = [...CommonTags, ...tags];
@@ -126,6 +133,9 @@ interface MessageParams {
 
 export const messageAR = async ({ tags = [], data, anchor = '', process }: MessageParams): Promise<string> => {
   if (typeof window === 'undefined') return '';
+  if (!aoconnect) {
+    throw new Error('aoconnect not initialized');
+  }
   
   try {
     if (!process) throw new Error("Process ID is required.");
