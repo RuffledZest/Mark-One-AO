@@ -16,6 +16,7 @@ import { useConvex, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { Id } from "@/convex/_generated/dataModel";
 
 export interface Team {
   _id: string;
@@ -67,7 +68,7 @@ const SidebarTopButton = ({ user, setActiveTeamInfo }: any) => {
     activeTeam ? setActiveTeamInfo(activeTeam) : null;
   }, [activeTeam]);
 
-  const handleDeleteTeam = async (teamId: string) => {
+  const handleDeleteTeam = async (teamId: Id<"teams">) => {
     try {
       await deleteTeam({ teamId });
       toast.success("Team deleted successfully");
@@ -110,7 +111,7 @@ const SidebarTopButton = ({ user, setActiveTeamInfo }: any) => {
               </DropdownMenuItem>
               {team.createdBy === user?.email && (
                 <DropdownMenuItem
-                  onClick={() => handleDeleteTeam(team._id)}
+                  onClick={() => handleDeleteTeam(team._id as Id<"teams">)}
                   className="cursor-pointer focus:bg-neutral-700 focus:text-white p-2"
                 >
                   <Trash2 size={16} className="text-red-500" />
