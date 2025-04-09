@@ -73,33 +73,49 @@ export async function getWalletAddress(): Promise<string> {
   }
 }
 
-export async function spawnProcess(name: string, tags: any[] = []) {
-  if (!isClient) return;
-
+export const spawnProcess = async (name: string, tags: any[] = []): Promise<string> => {
+  if (!isClient) return '';
+  
   try {
-    const { spawn, createDataItemSigner } = await import('@permaweb/aoconnect');
+    if (window.arweaveWallet == undefined) {
+      return '';
+    }
 
     const allTags = [...CommonTags, ...tags];
     if (name) {
       allTags.push({ name: "Name", value: name });
     }
 
-    const signer = createDataItemSigner(window.arweaveWallet);
+    console.log(allTags);
+    
+    const signi = await getWalletAddress(); 
+    console.log(signi);
 
-    const processId = await spawn({
-      module: AOModule,
-      scheduler: AOScheduler,
-      signer,
+    // Create a transaction
+    const arweave = new window.Arweave({
+      host: 'arweave.net',
+      port: 443,
+      protocol: 'https'
+    });
+
+    const transaction = await arweave.createTransaction({
+      data: '',
       tags: allTags
     });
 
-    console.log(processId);
-    return processId;
+    // Sign the transaction
+    await window.arweaveWallet.signTransaction(transaction);
+
+    // Post the transaction
+    const response = await arweave.transactions.post(transaction);
+    console.log('Transaction posted:', response);
+
+    return response.id || '';
   } catch (error) {
     console.error("Error spawning process:", error);
-    throw error;
+    return '';
   }
-}
+};
 
 export async function messageAR({ tags = [], data, anchor = '', process }: {
   tags?: any[],

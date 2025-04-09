@@ -50,9 +50,15 @@ export const ArweaveIntegration: React.FC = () => {
   const handleSpawnProcess = async (): Promise<void> => {
     try {
       const newProcessId = await spawnProcess('CanvasNotesApp');
-      setProcessId(newProcessId);
+      if (newProcessId) {
+        setProcessId(newProcessId);
+      } else {
+        console.error("Failed to spawn process");
+        setMessageResponse("Failed to spawn process. Please try again.");
+      }
     } catch (error) {
       console.error("Error spawning process:", error);
+      setMessageResponse("Error spawning process.");
     }
   };
 
