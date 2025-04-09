@@ -1,23 +1,7 @@
 "use client";
 
-// Import aoconnect dynamically to avoid SSR issues
-let aoconnect: any = null;
-
 // Check if we're on the client side
 const isClient = typeof window !== 'undefined';
-
-// Initialize aoconnect
-const initAoconnect = async () => {
-  if (!isClient) return;
-  if (aoconnect) return;
-  
-  try {
-    const module = await import('@permaweb/aoconnect');
-    aoconnect = module;
-  } catch (error) {
-    console.error('Failed to load aoconnect:', error);
-  }
-};
 
 // Arweave Documentation
 const AOModule = "Do_Uc2Sju_ffp6Ev0AnLVdPtot15rvMjP-a9VVaA5fM"; // aos 2.0.1
@@ -37,6 +21,20 @@ declare global {
       }) => Promise<void>;
       disconnect: () => Promise<void>;
       getActiveAddress: () => Promise<string>;
+      spawn: (options: {
+        module: string;
+        scheduler: string;
+        signer: any;
+        tags: any[];
+      }) => Promise<string>;
+      message: (options: {
+        data: string;
+        anchor?: string;
+        process: string;
+        tags: any[];
+        signer: any;
+      }) => Promise<string>;
+      createDataItemSigner: (wallet: any) => any;
     };
   }
 }
@@ -46,7 +44,7 @@ export async function connectWallet() {
   if (!isClient) return;
   
   try {
-    if (!window.arweaveWallet) {
+    if (window.arweaveWallet == undefined) {
       alert('No Arconnect detected');
       return;
     }
@@ -72,15 +70,31 @@ export async function connectWallet() {
 // disconnect wallet
 export async function disconnectWallet() {
   if (!isClient) return;
-  return await window.arweaveWallet.disconnect();
+  try {
+    if (window.arweaveWallet == undefined) {
+      return;
+    }
+    return await window.arweaveWallet.disconnect();
+  } catch (error) {
+    console.error(error);
+  }
 }
 
 // get wallet details
 export async function getWalletAddress() {
   if (!isClient) return '';
-  const walletAddress = await window.arweaveWallet.getActiveAddress();
-  console.log(walletAddress);
-  return walletAddress;
+  
+  try {
+    if (window.arweaveWallet == undefined) {
+      return '';
+    }
+    const walletAddress = await window.arweaveWallet.getActiveAddress();
+    console.log(walletAddress);
+    return walletAddress;
+  } catch (error) {
+    console.error(error);
+    return '';
+  }
 }
 
 // spawn process
@@ -88,8 +102,9 @@ export const spawnProcess = async (name: string, tags: any[] = []) => {
   if (!isClient) return '';
   
   try {
-    await initAoconnect();
-    if (!aoconnect) throw new Error('Failed to initialize aoconnect');
+    if (window.arweaveWallet == undefined) {
+      return '';
+    }
 
     const allTags = [...CommonTags, ...tags];
     if (name) {
@@ -100,10 +115,10 @@ export const spawnProcess = async (name: string, tags: any[] = []) => {
     
     const signi = await getWalletAddress(); 
     console.log(signi);
-    const processId = await aoconnect.spawn({
+    const processId = await window.arweaveWallet.spawn({
       module: AOModule,
       scheduler: AOScheduler,
-      signer: aoconnect.createDataItemSigner(window.arweaveWallet),
+      signer: window.arweaveWallet.createDataItemSigner(window.arweaveWallet),
       tags: allTags
     });
     console.log(processId);
@@ -111,7 +126,7 @@ export const spawnProcess = async (name: string, tags: any[] = []) => {
     return processId;
   } catch (error) {
     console.error("Error spawning process:", error);
-    throw error;
+    return '';
   }
 };
 
@@ -120,23 +135,24 @@ export const messageAR = async ({ tags = [], data, anchor = '', process }: any) 
   if (!isClient) return '';
   
   try {
-    await initAoconnect();
-    if (!aoconnect) throw new Error('Failed to initialize aoconnect');
+    if (window.arweaveWallet == undefined) {
+      return '';
+    }
 
     if (!process) throw new Error("Process ID is required.");
     if (!data) throw new Error("Data is required.");
 
     const allTags = [...CommonTags, ...tags];
-    const messageId = await aoconnect.message({
+    const messageId = await window.arweaveWallet.message({
       data,
       anchor,
       process,
       tags: allTags,
-      signer: aoconnect.createDataItemSigner(window.arweaveWallet)
+      signer: window.arweaveWallet.createDataItemSigner(window.arweaveWallet)
     });
     return messageId;
   } catch (error) {
     console.error("Error sending message:", error);
-    throw error;
+    return '';
   }
 };
