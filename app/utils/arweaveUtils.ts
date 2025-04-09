@@ -29,8 +29,13 @@ declare global {
   }
 }
 
+// Check if we're on the client side
+const isClient = typeof window !== 'undefined';
+
 // connect wallet
 export async function connectWallet() {
+  if (!isClient) return;
+  
   try {
     if (!window.arweaveWallet) {
       alert('No Arconnect detected');
@@ -57,11 +62,13 @@ export async function connectWallet() {
 
 // disconnect wallet
 export async function disconnectWallet() {
+  if (!isClient) return;
   return await window.arweaveWallet.disconnect();
 }
 
 // get wallet details
 export async function getWalletAddress() {
+  if (!isClient) return '';
   const walletAddress = await window.arweaveWallet.getActiveAddress();
   console.log(walletAddress);
   return walletAddress;
@@ -69,6 +76,8 @@ export async function getWalletAddress() {
 
 // spawn process
 export const spawnProcess = async (name: string, tags: any[] = []) => {
+  if (!isClient) return '';
+  
   try {
     const allTags = [...CommonTags, ...tags];
     if (name) {
@@ -96,6 +105,8 @@ export const spawnProcess = async (name: string, tags: any[] = []) => {
 
 // send message to process
 export const messageAR = async ({ tags = [], data, anchor = '', process }: any) => {
+  if (!isClient) return '';
+  
   try {
     if (!process) throw new Error("Process ID is required.");
     if (!data) throw new Error("Data is required.");

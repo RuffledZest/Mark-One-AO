@@ -1,20 +1,25 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { spawnProcess, messageAR, connectWallet, disconnectWallet, getWalletAddress } from '../utils/arweaveUtils';
 
-export const ArweaveIntegration = () => {
+// Create a dynamic import for the component to ensure it only runs on the client side
+const ArweaveIntegration = () => {
   const [walletAddress, setWalletAddress] = useState('');
   const [processId, setProcessId] = useState('');
   const [messageInput, setMessageInput] = useState('');
   const [messageResponse, setMessageResponse] = useState('');
   const [isConnected, setIsConnected] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
     checkWalletConnection();
   }, []);
 
   const checkWalletConnection = async () => {
+    if (!isClient) return;
     try {
       const address = await getWalletAddress();
       if (address) {
@@ -28,6 +33,7 @@ export const ArweaveIntegration = () => {
   };
 
   const handleConnectWallet = async () => {
+    if (!isClient) return;
     try {
       await connectWallet();
       const address = await getWalletAddress();
@@ -39,6 +45,7 @@ export const ArweaveIntegration = () => {
   };
 
   const handleDisconnectWallet = async () => {
+    if (!isClient) return;
     try {
       await disconnectWallet();
       setWalletAddress('');
@@ -49,6 +56,7 @@ export const ArweaveIntegration = () => {
   };
 
   const handleSpawnProcess = async () => {
+    if (!isClient) return;
     try {
       const newProcessId = await spawnProcess('CanvasNotesApp');
       setProcessId(newProcessId);
@@ -58,6 +66,7 @@ export const ArweaveIntegration = () => {
   };
 
   const handleSendMessage = async () => {
+    if (!isClient) return;
     if (!processId) {
       alert('Please spawn a process first.');
       return;
@@ -70,6 +79,10 @@ export const ArweaveIntegration = () => {
       setMessageResponse("Error sending message.");
     }
   };
+
+  if (!isClient) {
+    return null; // or a loading state
+  }
 
   return (
     <section className="py-12 px-6 md:px-24">
@@ -110,4 +123,9 @@ export const ArweaveIntegration = () => {
       </div>
     </section>
   );
-}; 
+};
+
+// Export the component with dynamic import
+export default dynamic(() => Promise.resolve(ArweaveIntegration), {
+  ssr: false
+}); 
