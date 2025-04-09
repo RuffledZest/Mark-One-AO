@@ -2,7 +2,12 @@
 
 // Check if we're on the client side
 const isClient = typeof window !== 'undefined';
-
+import {
+  spawn,
+  message,
+  createDataItemSigner,
+  createSigner
+} from "@permaweb/aoconnect"
 // Arweave Documentation
 const AOModule = "Do_Uc2Sju_ffp6Ev0AnLVdPtot15rvMjP-a9VVaA5fM"; // aos 2.0.1
 const AOScheduler = "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA";
@@ -131,45 +136,22 @@ export const spawnProcess = async (name: string, tags: any[] = []) => {
 };
 
 // send message to process
-export const messageAR = async ({ tags = [], data, anchor = '', process }: any) => {
-  if (!isClient) return '';
-  
+export const messageAR = async ({ tags = [], data, anchor = '', process }: { tags?: any[], data: any, anchor?: string, process: string }) => {
   try {
-    if (window.arweaveWallet == undefined) {
-      return '';
-    }
-
-    if (!process) {
-      console.error("Process ID is required.");
-      return '';
-    }
-    if (!data) {
-      console.error("Data is required.");
-      return '';
-    }
+    if (!process) throw new Error("Process ID is required.");
+    if (!data) throw new Error("Data is required.");
 
     const allTags = [...CommonTags, ...tags];
-    const arweave = new window.Arweave({
-      host: 'arweave.net',
-      port: 443,
-      protocol: 'https'
+    const messageId = await message({
+      data,
+      anchor,
+      process,
+      tags: allTags,
+      signer: createDataItemSigner(window.arweaveWallet)
     });
-
-    const transaction = await arweave.createTransaction({
-      data: data,
-      tags: allTags
-    });
-
-    // Sign the transaction
-    await window.arweaveWallet.signTransaction(transaction);
-
-    // Post the transaction
-    const response = await arweave.transactions.post(transaction);
-    console.log('Message sent:', response);
-
-    return response.id;
+    return messageId;
   } catch (error) {
     console.error("Error sending message:", error);
-    return '';
+    throw error;
   }
 };
