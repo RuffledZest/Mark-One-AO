@@ -91,49 +91,32 @@ export async function getWalletAddress() {
 }
 
 // spawn process
-export const spawnProcess = async (name: string, tags: any[] = []) => {
-  if (!isClient) return '';
-  
+export const spawnProcess = async (name: string, tags = []) => {
   try {
-    if (window.arweaveWallet == undefined) {
-      return '';
-    }
-
     const allTags = [...CommonTags, ...tags];
     if (name) {
       allTags.push({ name: "Name", value: name });
     }
 
-    console.log(allTags);
+    console.log(allTags)
     
     const signi = await getWalletAddress(); 
-    console.log(signi);
-
-    // Create a transaction
-    const arweave = new window.Arweave({
-      host: 'arweave.net',
-      port: 443,
-      protocol: 'https'
-    });
-
-    const transaction = await arweave.createTransaction({
-      data: '',
+    console.log(signi)
+    const processId = await spawn({
+      module: AOModule,
+      scheduler: AOScheduler,
+      signer: createDataItemSigner(window.arweaveWallet),
       tags: allTags
     });
+    console.log(processId)
 
-    // Sign the transaction
-    await window.arweaveWallet.signTransaction(transaction);
-
-    // Post the transaction
-    const response = await arweave.transactions.post(transaction);
-    console.log('Transaction posted:', response);
-
-    return response.id;
+    return processId;
   } catch (error) {
     console.error("Error spawning process:", error);
-    return '';
+    throw error;
   }
 };
+
 
 // send message to process
 export const messageAR = async ({ tags = [], data, anchor = '', process }: { tags?: any[], data: any, anchor?: string, process: string }) => {
