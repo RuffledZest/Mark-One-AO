@@ -22,7 +22,7 @@ export const triggerTeamCreationAction = async (teamName: string): Promise<void>
 
     // Send a message to the process using the CreateTeam handler
     const messageId = await messageAR({
-      process: processId,
+      process: processId || '',
       data: JSON.stringify({ action: 'CreateTeam', name: teamName }),
       tags: [...commonTags, { name: "Action", value: "CreateTeam" }]
     });
@@ -49,7 +49,7 @@ export const triggerFileCreationAction = async (fileName: string, teamName: stri
 
     // Send a message to the process using the CreateFile handler
     const messageId = await messageAR({
-      process: processId,
+      process: processId || '',
       data: JSON.stringify({ 
         action: 'CreateFile', 
         name: fileName,
