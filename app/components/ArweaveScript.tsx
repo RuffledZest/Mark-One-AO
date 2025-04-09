@@ -22,7 +22,7 @@ export const useArweaveScript = () => {
       }
 
       const script = document.createElement('script');
-      script.src = 'https://unpkg.com/@permaweb/aoconnect@latest/dist/aoconnect.min.js';
+      script.src = 'https://unpkg.com/arweave@1.14.0/bundles/web.bundle.min.js';
       script.async = true;
       
       script.onload = () => {

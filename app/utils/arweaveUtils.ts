@@ -16,52 +16,9 @@ const CommonTags: Tag[] = [
   { name: "Version", value: "0.2.1" },
 ];
 
-// Initialize aoconnect only on the client side
-let aoconnect: any = null;
-let isInitializing = false;
-let initPromise: Promise<void> | null = null;
-
-const initializeAoconnect = async () => {
-  if (typeof window === 'undefined') return;
-  if (aoconnect) return;
-  if (isInitializing) return initPromise;
-  
-  isInitializing = true;
-  try {
-    const module = await import(/* webpackChunkName: "aoconnect" */ '@permaweb/aoconnect');
-    aoconnect = module.connect({
-      MODE: "mainnet",
-      MU_URL: "https://mu.ao-testnet.xyz",
-      CU_URL: "https://cu.ao-testnet.xyz",
-      GATEWAY_URL: "https://arweave.net"
-    });
-    isInitializing = false;
-    return;
-  } catch (error) {
-    console.error('Failed to load aoconnect:', error);
-    isInitializing = false;
-    initPromise = null;
-    throw error;
-  }
-};
-
-// Ensure aoconnect is initialized before use
-const ensureAoconnect = async () => {
-  if (!aoconnect) {
-    try {
-      await initializeAoconnect();
-    } catch (error) {
-      console.error('Failed to initialize aoconnect:', error);
-      throw new Error('Failed to initialize aoconnect');
-    }
-  }
-  if (!aoconnect) {
-    throw new Error('aoconnect not initialized');
-  }
-};
-
 declare global {
   interface Window {
+    arweave: any;
     arweaveWallet: {
       connect: (permissions: string[], appInfo: { name: string; logo: string }, gateway?: {
         host: string;
@@ -130,7 +87,7 @@ export const getWalletAddress = async (): Promise<string> => {
 // spawn process
 export const spawnProcess = async (name: string, tags: Tag[] = []): Promise<string> => {
   if (typeof window === 'undefined') return '';
-  await ensureAoconnect();
+  if (!window.arweave) throw new Error('Arweave not initialized');
   
   try {
     const allTags: Tag[] = [...CommonTags, ...tags];
@@ -140,12 +97,11 @@ export const spawnProcess = async (name: string, tags: Tag[] = []): Promise<stri
 
     console.log(allTags);
     
-    const signi = await getWalletAddress(); 
-    console.log(signi);
-    const processId = await aoconnect.spawn({
+    const signer = window.arweave.createDataItemSigner(window.arweaveWallet);
+    const processId = await window.arweave.spawn({
       module: AOModule,
       scheduler: AOScheduler,
-      signer: aoconnect.createDataItemSigner(window.arweaveWallet),
+      signer,
       tags: allTags
     });
     console.log(processId);
@@ -167,19 +123,20 @@ interface MessageParams {
 
 export const messageAR = async ({ tags = [], data, anchor = '', process }: MessageParams): Promise<string> => {
   if (typeof window === 'undefined') return '';
-  await ensureAoconnect();
+  if (!window.arweave) throw new Error('Arweave not initialized');
   
   try {
     if (!process) throw new Error("Process ID is required.");
     if (!data) throw new Error("Data is required.");
 
     const allTags = [...CommonTags, ...tags];
-    const messageId = await aoconnect.message({
+    const signer = window.arweave.createDataItemSigner(window.arweaveWallet);
+    const messageId = await window.arweave.message({
       data,
       anchor,
       process,
       tags: allTags,
-      signer: aoconnect.createDataItemSigner(window.arweaveWallet)
+      signer
     });
     return messageId;
   } catch (error) {
