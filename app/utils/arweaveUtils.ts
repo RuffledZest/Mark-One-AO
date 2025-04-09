@@ -34,7 +34,6 @@ declare global {
         tags: any[];
         signer: any;
       }) => Promise<string>;
-      createDataItemSigner: (wallet: any) => any;
     };
   }
 }
@@ -118,7 +117,7 @@ export const spawnProcess = async (name: string, tags: any[] = []) => {
     const processId = await window.arweaveWallet.spawn({
       module: AOModule,
       scheduler: AOScheduler,
-      signer: window.arweaveWallet.createDataItemSigner(window.arweaveWallet),
+      signer: window.arweaveWallet,
       tags: allTags
     });
     console.log(processId);
@@ -139,8 +138,14 @@ export const messageAR = async ({ tags = [], data, anchor = '', process }: any) 
       return '';
     }
 
-    if (!process) throw new Error("Process ID is required.");
-    if (!data) throw new Error("Data is required.");
+    if (!process) {
+      console.error("Process ID is required.");
+      return '';
+    }
+    if (!data) {
+      console.error("Data is required.");
+      return '';
+    }
 
     const allTags = [...CommonTags, ...tags];
     const messageId = await window.arweaveWallet.message({
@@ -148,7 +153,7 @@ export const messageAR = async ({ tags = [], data, anchor = '', process }: any) 
       anchor,
       process,
       tags: allTags,
-      signer: window.arweaveWallet.createDataItemSigner(window.arweaveWallet)
+      signer: window.arweaveWallet
     });
     return messageId;
   } catch (error) {
