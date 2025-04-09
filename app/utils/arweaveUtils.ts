@@ -1,3 +1,7 @@
+"use client";
+
+import { useArweave } from '@/components/ArweaveHandler';
+
 // Arweave Documentation
 const AOModule: string = "Do_Uc2Sju_ffp6Ev0AnLVdPtot15rvMjP-a9VVaA5fM"; // aos 2.0.1
 const AOScheduler: string = "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA";
@@ -183,3 +187,6 @@ export const messageAR = async ({ tags = [], data, anchor = '', process }: Messa
     throw error;
   }
 };
+
+// Export the Arweave hook for components to use
+export { useArweave };
