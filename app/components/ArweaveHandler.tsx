@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import { connect } from '@permaweb/aoconnect';
+import { useEffect, useState, useCallback } from 'react';
 
 let aoconnect: any = null;
 
@@ -9,29 +8,34 @@ export const useArweave = () => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  useEffect(() => {
-    const initialize = async () => {
-      try {
-        if (!aoconnect) {
-          aoconnect = connect({
-            MODE: "mainnet",
-            MU_URL: "https://mu.ao-testnet.xyz",
-            CU_URL: "https://cu.ao-testnet.xyz",
-            GATEWAY_URL: "https://arweave.net"
-          });
-        }
-        setIsInitialized(true);
-      } catch (err) {
-        setError(err as Error);
-        console.error('Failed to initialize aoconnect:', err);
-      }
-    };
-
-    initialize();
+  const initialize = useCallback(async () => {
+    if (aoconnect) return;
+    
+    try {
+      const { connect } = await import(/* webpackChunkName: "aoconnect" */ '@permaweb/aoconnect');
+      aoconnect = connect({
+        MODE: "mainnet",
+        MU_URL: "https://mu.ao-testnet.xyz",
+        CU_URL: "https://cu.ao-testnet.xyz",
+        GATEWAY_URL: "https://arweave.net"
+      });
+      setIsInitialized(true);
+    } catch (err) {
+      console.error('Failed to load aoconnect:', err);
+      setError(err as Error);
+    }
   }, []);
 
-  const spawnProcess = async (name: string, tags: any[] = []) => {
-    if (!aoconnect) throw new Error('aoconnect not initialized');
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      initialize();
+    }
+  }, [initialize]);
+
+  const spawnProcess = useCallback(async (name: string, tags: any[] = []) => {
+    if (!aoconnect) {
+      await initialize();
+    }
     
     try {
       const allTags = [
@@ -56,10 +60,12 @@ export const useArweave = () => {
       console.error("Error spawning process:", error);
       throw error;
     }
-  };
+  }, [initialize]);
 
-  const messageAR = async ({ tags = [], data, anchor = '', process }: any) => {
-    if (!aoconnect) throw new Error('aoconnect not initialized');
+  const messageAR = useCallback(async ({ tags = [], data, anchor = '', process }: any) => {
+    if (!aoconnect) {
+      await initialize();
+    }
     
     try {
       if (!process) throw new Error("Process ID is required.");
@@ -85,7 +91,7 @@ export const useArweave = () => {
       console.error("Error sending message:", error);
       throw error;
     }
-  };
+  }, [initialize]);
 
   return {
     isInitialized,
