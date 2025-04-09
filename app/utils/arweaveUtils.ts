@@ -1,6 +1,6 @@
 "use client";
 
-import { useArweave } from '@/components/ArweaveHandler';
+import { useArweave } from '../components/ArweaveHandler';
 
 // Arweave Documentation
 const AOModule: string = "Do_Uc2Sju_ffp6Ev0AnLVdPtot15rvMjP-a9VVaA5fM"; // aos 2.0.1
