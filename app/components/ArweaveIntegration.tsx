@@ -81,7 +81,7 @@ const ArweaveIntegration = () => {
   };
 
   if (!isClient) {
-    return null; // or a loading state
+    return <div>Loading...</div>; // Show a loading state instead of null
   }
 
   return (
@@ -127,5 +127,6 @@ const ArweaveIntegration = () => {
 
 // Export the component with dynamic import
 export default dynamic(() => Promise.resolve(ArweaveIntegration), {
-  ssr: false
+  ssr: false,
+  loading: () => <div>Loading...</div>
 }); 

@@ -1,11 +1,23 @@
 "use client";
 
-import {
-  spawn,
-  message,
-  createDataItemSigner,
-  createSigner
-} from "@permaweb/aoconnect";
+// Import aoconnect dynamically to avoid SSR issues
+let aoconnect: any = null;
+
+// Check if we're on the client side
+const isClient = typeof window !== 'undefined';
+
+// Initialize aoconnect
+const initAoconnect = async () => {
+  if (!isClient) return;
+  if (aoconnect) return;
+  
+  try {
+    const module = await import('@permaweb/aoconnect');
+    aoconnect = module;
+  } catch (error) {
+    console.error('Failed to load aoconnect:', error);
+  }
+};
 
 // Arweave Documentation
 const AOModule = "Do_Uc2Sju_ffp6Ev0AnLVdPtot15rvMjP-a9VVaA5fM"; // aos 2.0.1
@@ -28,9 +40,6 @@ declare global {
     };
   }
 }
-
-// Check if we're on the client side
-const isClient = typeof window !== 'undefined';
 
 // connect wallet
 export async function connectWallet() {
@@ -79,6 +88,9 @@ export const spawnProcess = async (name: string, tags: any[] = []) => {
   if (!isClient) return '';
   
   try {
+    await initAoconnect();
+    if (!aoconnect) throw new Error('Failed to initialize aoconnect');
+
     const allTags = [...CommonTags, ...tags];
     if (name) {
       allTags.push({ name: "Name", value: name });
@@ -88,10 +100,10 @@ export const spawnProcess = async (name: string, tags: any[] = []) => {
     
     const signi = await getWalletAddress(); 
     console.log(signi);
-    const processId = await spawn({
+    const processId = await aoconnect.spawn({
       module: AOModule,
       scheduler: AOScheduler,
-      signer: createDataItemSigner(window.arweaveWallet),
+      signer: aoconnect.createDataItemSigner(window.arweaveWallet),
       tags: allTags
     });
     console.log(processId);
@@ -108,16 +120,19 @@ export const messageAR = async ({ tags = [], data, anchor = '', process }: any) 
   if (!isClient) return '';
   
   try {
+    await initAoconnect();
+    if (!aoconnect) throw new Error('Failed to initialize aoconnect');
+
     if (!process) throw new Error("Process ID is required.");
     if (!data) throw new Error("Data is required.");
 
     const allTags = [...CommonTags, ...tags];
-    const messageId = await message({
+    const messageId = await aoconnect.message({
       data,
       anchor,
       process,
       tags: allTags,
-      signer: createDataItemSigner(window.arweaveWallet)
+      signer: aoconnect.createDataItemSigner(window.arweaveWallet)
     });
     return messageId;
   } catch (error) {
