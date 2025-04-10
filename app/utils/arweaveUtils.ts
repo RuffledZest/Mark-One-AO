@@ -87,27 +87,28 @@ export const spawnProcess = async (name: string, tags: any[] = []): Promise<stri
       throw new Error('No wallet address found');
     }
 
+    // Create process spawn message
     const processData = {
-      name,
-      creator: walletAddress,
-      timestamp: Date.now(),
-      type: 'process-creation',
-      module: AOModule,
-      scheduler: AOScheduler
+      Input: {
+        'Function': 'Spawn',
+        'Module': AOModule,
+        'Name': name
+      }
     };
 
     const transaction = await arweave.createTransaction({
       data: JSON.stringify(processData)
     });
 
-    // Add mandatory tags
+    // Add mandatory AO tags
     transaction.addTag('App-Name', 'CanvasNotesApp');
     transaction.addTag('Content-Type', 'application/json');
-    transaction.addTag('Type', 'process-creation');
-    transaction.addTag('Process-Name', name);
-    transaction.addTag('Creator', walletAddress);
+    transaction.addTag('Protocol', 'AO');
+    transaction.addTag('Type', 'Process');
+    transaction.addTag('Action', 'Spawn');
     transaction.addTag('Module', AOModule);
     transaction.addTag('Scheduler', AOScheduler);
+    transaction.addTag('Name', name);
 
     // Add custom tags
     for (const tag of tags) {
@@ -115,21 +116,19 @@ export const spawnProcess = async (name: string, tags: any[] = []): Promise<stri
     }
 
     // Sign the transaction
-    const signedTransaction = await window.arweaveWallet.sign(transaction);
-    if (!signedTransaction || !signedTransaction.signature) {
-      throw new Error('Transaction was not signed properly');
+    await window.arweaveWallet.sign(transaction);
+
+    // Post the transaction
+    const uploader = await arweave.transactions.getUploader(transaction);
+    while (!uploader.isComplete) {
+      await uploader.uploadChunk();
     }
 
-    // Post the signed transaction
-    const response = await arweave.transactions.post(signedTransaction);
-    if (response.status !== 200 && response.status !== 202) {
-      throw new Error('Failed to post transaction');
-    }
-
+    console.log('Process spawn transaction completed:', transaction.id);
     return transaction.id;
   } catch (error) {
     console.error('Error spawning process:', error);
-    throw error; // Propagate the error instead of returning empty string
+    throw error;
   }
 };
 
@@ -147,17 +146,26 @@ export async function messageAR({ tags = [], data, anchor = '', process }: {
     if (!process) throw new Error("Process ID is required.");
     if (!data) throw new Error("Data is required.");
 
+    // Format message data for AO
+    const messageData = JSON.stringify({
+      Input: {
+        Action: tags.find(t => t.name === 'Action')?.value || 'Message',
+        ...data
+      }
+    });
+
     const allTags = [
-      ...CommonTags,
+      { name: "Protocol", value: "AO" },
       { name: "Module", value: AOModule },
       { name: "Scheduler", value: AOScheduler },
+      { name: "Target", value: process },
       ...tags
     ];
     
     const signer = createDataItemSigner(window.arweaveWallet);
 
     const messageId = await message({
-      data,
+      data: messageData,
       anchor,
       process,
       tags: allTags,
