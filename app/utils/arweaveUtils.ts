@@ -98,7 +98,12 @@ export const spawnProcess = async (name: string, tags: any[] = []): Promise<stri
 
     // Create transaction
     const transaction = await arweave.createTransaction({
-      data: JSON.stringify(processData)
+      data: JSON.stringify(processData),
+      last_tx: '', // Required for proper transaction creation
+      owner: walletAddress,
+      target: '', // No target for process creation
+      quantity: '0', // No AR transfer
+      reward: '0' // Will be calculated by Arweave
     });
 
     // Add mandatory AO tags
