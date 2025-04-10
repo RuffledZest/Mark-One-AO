@@ -87,16 +87,17 @@ export const spawnProcess = async (name: string, tags: any[] = []): Promise<stri
       throw new Error('No wallet address found');
     }
 
-    // Create process spawn message
+    // Create process spawn message with proper AO format
     const processData = {
       Input: {
         'Function': 'Spawn',
         'Module': AOModule,
-        'Name': name
+        'Name': name,
+        'Scheduler': AOScheduler
       }
     };
 
-    // Create transaction
+    // Create transaction with all required fields
     const transaction = await arweave.createTransaction({
       data: JSON.stringify(processData),
       last_tx: '', // Required for proper transaction creation
@@ -115,6 +116,7 @@ export const spawnProcess = async (name: string, tags: any[] = []): Promise<stri
     transaction.addTag('Module', AOModule);
     transaction.addTag('Scheduler', AOScheduler);
     transaction.addTag('Name', name);
+    transaction.addTag('Version', '0.2.1');
 
     // Add custom tags
     for (const tag of tags) {
@@ -168,7 +170,9 @@ export async function messageAR({ tags = [], data, anchor = '', process }: {
     const messageData = JSON.stringify({
       Input: {
         Action: tags.find(t => t.name === 'Action')?.value || 'Message',
-        ...data
+        ...data,
+        Module: AOModule,
+        Scheduler: AOScheduler
       }
     });
 
@@ -177,6 +181,7 @@ export async function messageAR({ tags = [], data, anchor = '', process }: {
       { name: "Module", value: AOModule },
       { name: "Scheduler", value: AOScheduler },
       { name: "Target", value: process },
+      { name: "Version", value: "0.2.1" },
       ...tags
     ];
     

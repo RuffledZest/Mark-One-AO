@@ -18,9 +18,9 @@ import { useRouter } from "next/navigation";
 export default function InvitationsList() {
   const { user } = useKindeBrowserClient();
   const router = useRouter();
-  const pendingInvitations = useQuery(api.teams.getPendingInvitations, user?.email ? {
-    email: user.email
-  } : "skip");
+  const pendingInvitations = useQuery(api.teams.getPendingInvitations, {
+    email: user?.email!,
+  });
   const acceptInvitation = useMutation(api.teams.acceptInvitation);
 
   const handleAcceptInvitation = async (invitationId: Id<"invitations">) => {
