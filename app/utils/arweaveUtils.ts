@@ -26,32 +26,26 @@ declare global {
   }
 }
 
-export async function connectWallet() {
-  if (!isClient) return;
-
+export const connectWallet = async (): Promise<void> => {
   try {
-    if (!window.arweaveWallet) {
-      alert('No Arconnect detected');
-      return;
+    if (typeof window === 'undefined' || !window.arweaveWallet) {
+      throw new Error('Arweave wallet not found');
     }
-    await window.arweaveWallet.connect(
-      ['ACCESS_ADDRESS', 'SIGN_TRANSACTION', 'ACCESS_TOKENS'],
-      {
-        name: 'Anon',
-        logo: 'https://arweave.net/jAvd7Z1CBd8gVF2D6ESj7SMCCUYxDX_z3vpp5aHdaYk',
-      },
-      {
-        host: 'g8way.io',
-        port: 443,
-        protocol: 'https',
-      }
-    );
+
+    await window.arweaveWallet.connect([
+      'ACCESS_ADDRESS',
+      'SIGN_TRANSACTION',
+      'ACCESS_PUBLIC_KEY',
+      'SIGNATURE'
+    ], {
+      name: 'CanvasNotesApp',
+      logo: 'https://arweave.net/logo.png'
+    });
   } catch (error) {
-    console.error(error);
-  } finally {
-    console.log('connection finished execution');
+    console.error('Error connecting wallet:', error);
+    throw error;
   }
-}
+};
 
 export async function disconnectWallet() {
   if (!isClient || !window.arweaveWallet) return;
@@ -62,65 +56,66 @@ export async function disconnectWallet() {
   }
 }
 
-export async function getWalletAddress(): Promise<string> {
-  if (!isClient || !window.arweaveWallet) return '';
+export const getWalletAddress = async (): Promise<string> => {
   try {
-    const walletAddress = await window.arweaveWallet.getActiveAddress();
-    console.log(walletAddress);
-    return walletAddress;
-  } catch (error) {
-    console.error(error);
-    return '';
-  }
-}
-
-export const spawnProcess = async (name: string, tags: any[] = []): Promise<string> => {
-  if (!isClient) return '';
-  
-  try {
-    if (window.arweaveWallet == undefined) {
+    if (typeof window === 'undefined' || !window.arweaveWallet) {
       return '';
     }
+    return await window.arweaveWallet.getActiveAddress();
+  } catch (error) {
+    console.error('Error getting wallet address:', error);
+    return '';
+  }
+};
 
-    const allTags = [...CommonTags, ...tags];
-    if (name) {
-      allTags.push({ name: "Name", value: name });
-    }
-
-    console.log(allTags);
+export const spawnProcess = async (name: string, tags: any[] = []): Promise<string> => {
+  if (typeof window === 'undefined') return '';
+  
+  try {
+    // Ensure wallet is connected first
+    await connectWallet();
     
-    const signi = await getWalletAddress(); 
-    console.log(signi);
-
-    // Create a transaction with required data
     const arweave = new window.Arweave({
       host: 'arweave.net',
       port: 443,
-      protocol: 'https'
+      protocol: 'https',
+      timeout: 20000,
     });
 
-    const transaction = await arweave.createTransaction({
-      data: JSON.stringify({
-        type: 'process',
-        name: name,
-        timestamp: Date.now()
-      }),
-      tags: allTags
-    });
-
-    // Sign the transaction using the correct method
-    const signedTransaction = await window.arweaveWallet.sign(transaction);
-    if (!signedTransaction) {
-      throw new Error('Failed to sign transaction');
+    const walletAddress = await getWalletAddress();
+    if (!walletAddress) {
+      throw new Error('No wallet address found');
     }
 
-    // Post the transaction
-    const response = await arweave.transactions.post(signedTransaction);
-    console.log('Transaction posted:', response);
+    const processData = {
+      name,
+      creator: walletAddress,
+      timestamp: Date.now(),
+      type: 'process-creation'
+    };
 
-    return response.id || '';
+    const transaction = await arweave.createTransaction({
+      data: JSON.stringify(processData)
+    });
+
+    // Add mandatory tags
+    transaction.addTag('App-Name', 'CanvasNotesApp');
+    transaction.addTag('Content-Type', 'application/json');
+    transaction.addTag('Type', 'process-creation');
+    transaction.addTag('Process-Name', name);
+    transaction.addTag('Creator', walletAddress);
+
+    // Add custom tags
+    for (const tag of tags) {
+      transaction.addTag(tag.name, tag.value);
+    }
+
+    await window.arweaveWallet.sign(transaction);
+    await arweave.transactions.post(transaction);
+
+    return transaction.id;
   } catch (error) {
-    console.error("Error spawning process:", error);
+    console.error('Error spawning process:', error);
     return '';
   }
 };

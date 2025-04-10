@@ -1,33 +1,14 @@
-import { getWalletAddress } from './arweaveUtils';
+import { getWalletAddress, connectWallet } from './arweaveUtils';
 
 export interface TeamCreateOptions {
   name: string;
   description?: string;
 }
 
-const connectToWallet = async () => {
-  try {
-    if (window.arweaveWallet) {
-      await window.arweaveWallet.connect(['ACCESS_ADDRESS', 'SIGN_TRANSACTION', 'DISPATCH'], {
-        name: 'CanvasNotesApp',
-        logo: 'https://arweave.net/logo.png'
-      });
-      return true;
-    }
-    return false;
-  } catch (error) {
-    console.error('Error connecting to wallet:', error);
-    return false;
-  }
-};
-
 export const createTeam = async (options: TeamCreateOptions): Promise<string> => {
   try {
     // Ensure wallet is connected with proper permissions
-    const isConnected = await connectToWallet();
-    if (!isConnected) {
-      throw new Error('Failed to connect to wallet');
-    }
+    await connectWallet();
 
     // Get wallet address
     const walletAddress = await getWalletAddress();
@@ -55,8 +36,7 @@ export const createTeam = async (options: TeamCreateOptions): Promise<string> =>
 
     // Create and prepare transaction
     const transaction = await arweave.createTransaction({
-      data: JSON.stringify(teamData),
-      reward: '100000000' // Adequate reward for data size
+      data: JSON.stringify(teamData)
     });
 
     // Add mandatory tags
@@ -67,23 +47,12 @@ export const createTeam = async (options: TeamCreateOptions): Promise<string> =>
     transaction.addTag('Version', '1.0');
     transaction.addTag('Creator', walletAddress);
 
-    try {
-      // Sign transaction
-      await window.arweaveWallet.sign(transaction);
+    // Sign and post transaction
+    await window.arweaveWallet.sign(transaction);
+    await arweave.transactions.post(transaction);
 
-      // Post to gateway
-      const uploader = await arweave.transactions.getUploader(transaction);
-      
-      while (!uploader.isComplete) {
-        await uploader.uploadChunk();
-      }
-
-      console.log('Transaction uploaded successfully:', transaction.id);
-      return transaction.id;
-    } catch (error: any) {
-      console.error('Error in transaction signing/upload:', error);
-      throw new Error(error?.message || 'Failed to process transaction');
-    }
+    console.log('Transaction uploaded successfully:', transaction.id);
+    return transaction.id;
   } catch (error: any) {
     console.error('Error creating team:', error);
     throw new Error(error?.message || 'Failed to create team');
