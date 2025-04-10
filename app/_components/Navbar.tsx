@@ -32,7 +32,7 @@ export default function Navbar() {
   }, []);
 
   return (
-    <nav className="flex justify-between items-center p-4">
+    <nav className="flex justify-between items-center p-4 z-50">
       <div className="flex items-center space-x-2">
         <img src="/logo.svg" alt="logo" className="w-10 h-10" />
         <h1 className="text-white font-bold">MarkOne</h1>

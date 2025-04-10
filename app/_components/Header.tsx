@@ -45,7 +45,7 @@ const Header = () => {
   };
 
   return (
-    <header className="z-10 backdrop-blur-xl w-full fixed">
+    <header className="z-20 backdrop-blur-xl w-full fixed">
       <div className="mx-auto flex h-16 max-w-screen-xl items-center gap-8 px-4 sm:px-6 lg:px-8">
         <a className="flex gap-2" href="#">
           {/* <Image src={"./logo.svg"} alt="Eraser.io" width={30} height={30} /> */}
