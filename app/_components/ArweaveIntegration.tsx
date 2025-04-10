@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { spawnProcess, messageAR, connectWallet, disconnectWallet, getWalletAddress } from '../utils/arweaveUtils';
+import { spawnProcess, messageAR, getWalletAddress } from '../utils/arweaveUtils';
 import { setupBackgroundHandlers } from '../utils/backgroundHandler';
 
 export default function ArweaveIntegration() {
@@ -11,7 +11,7 @@ export default function ArweaveIntegration() {
 
   useEffect(() => {
     // Setup background handlers
-    const handler = setupBackgroundHandlers();
+    setupBackgroundHandlers();
     
     // Check wallet connection on mount
     const checkConnection = async () => {
@@ -23,11 +23,6 @@ export default function ArweaveIntegration() {
     };
     
     checkConnection();
-
-    return () => {
-      // Cleanup handler
-      handler.dispose();
-    };
   }, []);
 
   const handleSpawnProcess = async (): Promise<void> => {
