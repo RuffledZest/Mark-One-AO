@@ -96,6 +96,7 @@ export const spawnProcess = async (name: string, tags: any[] = []): Promise<stri
       }
     };
 
+    // Create transaction
     const transaction = await arweave.createTransaction({
       data: JSON.stringify(processData)
     });
@@ -115,17 +116,29 @@ export const spawnProcess = async (name: string, tags: any[] = []): Promise<stri
       transaction.addTag(tag.name, tag.value);
     }
 
-    // Sign the transaction
-    await window.arweaveWallet.sign(transaction);
+    try {
+      // Sign the transaction first
+      const signedTransaction = await window.arweaveWallet.sign(transaction);
+      
+      // Verify signature exists
+      if (!signedTransaction || !signedTransaction.signature) {
+        throw new Error('Transaction was not signed properly');
+      }
 
-    // Post the transaction
-    const uploader = await arweave.transactions.getUploader(transaction);
-    while (!uploader.isComplete) {
-      await uploader.uploadChunk();
+      // Post the signed transaction using simple post for process creation
+      const response = await arweave.transactions.post(signedTransaction);
+      
+      if (response.status !== 200 && response.status !== 202) {
+        throw new Error(`Failed to post transaction: ${response.status}`);
+      }
+
+      console.log('Process spawn transaction completed:', signedTransaction.id);
+      return signedTransaction.id;
+
+    } catch (error) {
+      console.error('Transaction signing/posting error:', error);
+      throw error;
     }
-
-    console.log('Process spawn transaction completed:', transaction.id);
-    return transaction.id;
   } catch (error) {
     console.error('Error spawning process:', error);
     throw error;
