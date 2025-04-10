@@ -18,16 +18,21 @@ import { useRouter } from "next/navigation";
 export default function InvitationsList() {
   const { user } = useKindeBrowserClient();
   const router = useRouter();
-  const pendingInvitations = useQuery(api.teams.getPendingInvitations, {
-    email: user?.email!,
-  });
+  const pendingInvitations = useQuery(api.teams.getPendingInvitations, user?.email ? {
+    email: user.email
+  } : "skip");
   const acceptInvitation = useMutation(api.teams.acceptInvitation);
 
   const handleAcceptInvitation = async (invitationId: Id<"invitations">) => {
     try {
+      if (!user?.email) {
+        toast.error("Please log in to accept invitations");
+        return;
+      }
+
       const result = await acceptInvitation({
         invitationId,
-        email: user?.email!,
+        email: user.email,
       });
       toast.success("Invitation accepted successfully");
       // Force a refresh of the page to update the team list
@@ -36,6 +41,10 @@ export default function InvitationsList() {
       toast.error(error.message || "Failed to accept invitation");
     }
   };
+
+  if (!user?.email) {
+    return null;
+  }
 
   if (!pendingInvitations?.length) {
     return null;
