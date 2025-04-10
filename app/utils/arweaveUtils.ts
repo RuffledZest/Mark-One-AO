@@ -91,7 +91,9 @@ export const spawnProcess = async (name: string, tags: any[] = []): Promise<stri
       name,
       creator: walletAddress,
       timestamp: Date.now(),
-      type: 'process-creation'
+      type: 'process-creation',
+      module: AOModule,
+      scheduler: AOScheduler
     };
 
     const transaction = await arweave.createTransaction({
@@ -104,19 +106,30 @@ export const spawnProcess = async (name: string, tags: any[] = []): Promise<stri
     transaction.addTag('Type', 'process-creation');
     transaction.addTag('Process-Name', name);
     transaction.addTag('Creator', walletAddress);
+    transaction.addTag('Module', AOModule);
+    transaction.addTag('Scheduler', AOScheduler);
 
     // Add custom tags
     for (const tag of tags) {
       transaction.addTag(tag.name, tag.value);
     }
 
-    await window.arweaveWallet.sign(transaction);
-    await arweave.transactions.post(transaction);
+    // Sign the transaction
+    const signedTransaction = await window.arweaveWallet.sign(transaction);
+    if (!signedTransaction || !signedTransaction.signature) {
+      throw new Error('Transaction was not signed properly');
+    }
+
+    // Post the signed transaction
+    const response = await arweave.transactions.post(signedTransaction);
+    if (response.status !== 200 && response.status !== 202) {
+      throw new Error('Failed to post transaction');
+    }
 
     return transaction.id;
   } catch (error) {
     console.error('Error spawning process:', error);
-    return '';
+    throw error; // Propagate the error instead of returning empty string
   }
 };
 
@@ -134,7 +147,13 @@ export async function messageAR({ tags = [], data, anchor = '', process }: {
     if (!process) throw new Error("Process ID is required.");
     if (!data) throw new Error("Data is required.");
 
-    const allTags = [...CommonTags, ...tags];
+    const allTags = [
+      ...CommonTags,
+      { name: "Module", value: AOModule },
+      { name: "Scheduler", value: AOScheduler },
+      ...tags
+    ];
+    
     const signer = createDataItemSigner(window.arweaveWallet);
 
     const messageId = await message({
@@ -145,6 +164,7 @@ export async function messageAR({ tags = [], data, anchor = '', process }: {
       signer
     });
 
+    console.log('Message sent successfully:', messageId);
     return messageId;
   } catch (error) {
     console.error("Error sending message:", error);
