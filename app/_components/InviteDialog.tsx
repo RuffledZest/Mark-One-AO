@@ -43,7 +43,7 @@ export default function InviteDialog({ teamId }: InviteDialogProps) {
       setWalletAddress("");
     } catch (error: any) {
       toast.error(error.message || "Failed to send invitation");
-    }
+    } 
   };
 
   return (
@@ -68,7 +68,7 @@ export default function InviteDialog({ teamId }: InviteDialogProps) {
             <Input
               id="email"
               type="email"
-              className="col-span-3"
+              className="col-span-3 text-black"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter email address"
@@ -81,7 +81,7 @@ export default function InviteDialog({ teamId }: InviteDialogProps) {
             <Input
               id="wallet"
               type="text"
-              className="col-span-3"
+              className="col-span-3 text-black"
               value={walletAddress}
               onChange={(e) => setWalletAddress(e.target.value)}
               placeholder="Enter wallet address "
