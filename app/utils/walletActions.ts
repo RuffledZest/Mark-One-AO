@@ -7,17 +7,24 @@ const commonTags = [
 ];
 
 export const triggerTeamCreationAction = async (teamName: string): Promise<void> => {
+  console.log('Triggering team creation action:', teamName);
   try {
     // First try to get the wallet address to check if already connected
     try {
-      await getWalletAddress();
+      console.log('Getting wallet address');
+    const wallet=  await getWalletAddress();
+      console.log('Got wallet address',wallet);
     } catch (error) {
       // If not connected, connect the wallet
+      console.log('Connecting wallet');
       await connectWallet();
     }
 
     // Spawn a new process for the team
+    console.log('Spawning process');
     const processId = await spawnProcess(teamName);
+    console.log('Spawning process done');
+    console.log('processId',processId);
     console.log('Team process spawned:', processId);
 
     // Send a message to the process using the CreateTeam handler
