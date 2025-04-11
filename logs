@@ -5,3 +5,13 @@
 [4/11/2025, 10:08:17 PM] POST /tx 410 7ms 
 [4/11/2025, 10:10:54 PM] GET /tx_anchor 200 2ms 
 [4/11/2025, 10:10:54 PM] GET /price/128 200 1ms 
+[4/11/2025, 10:30:05 PM] GET /tx_anchor 200 18ms 
+[4/11/2025, 10:30:05 PM] GET /price/128 200 1ms 
+[4/11/2025, 10:30:35 PM] GET /tx_anchor 200 2ms 
+[4/11/2025, 10:30:35 PM] GET /price/128 200 0ms 
+[4/11/2025, 10:33:28 PM] GET /tx_anchor 200 4ms 
+[4/11/2025, 10:33:28 PM] GET /price/128 200 1ms 
+[4/11/2025, 10:34:14 PM] GET /tx_anchor 200 3ms 
+[4/11/2025, 10:34:14 PM] GET /price/128 200 1ms 
+[4/11/2025, 10:36:07 PM] GET /tx_anchor 200 4ms 
+[4/11/2025, 10:36:07 PM] GET /price/128 200 1ms 

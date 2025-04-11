@@ -76,12 +76,7 @@ const DashboardHeader = ({ user }: any) => {
             </Tooltip>
           </TooltipProvider>
 
-          <div>
-            <div className="bg-blue-700 hover:bg-blue-800 cursor-pointer text-white text-sm rounded-sm flex items-center px-4 py-1">
-              <Send size={16} className="mr-1" />
-              Invite
-            </div>
-          </div>
+          
         </div>
       </div>
     </div>
