@@ -25,6 +25,7 @@ interface InviteDialogProps {
 
 export default function InviteDialog({ teamId }: InviteDialogProps) {
   const [email, setEmail] = useState("");
+  const [walletAddress, setWalletAddress] = useState("");
   const [open, setOpen] = useState(false);
   const { user } = useKindeBrowserClient();
   const sendInvitation = useMutation(api.teams.sendInvitation);
@@ -39,6 +40,7 @@ export default function InviteDialog({ teamId }: InviteDialogProps) {
       toast.success("Invitation sent successfully");
       setOpen(false);
       setEmail("");
+      setWalletAddress("");
     } catch (error: any) {
       toast.error(error.message || "Failed to send invitation");
     }
@@ -70,6 +72,19 @@ export default function InviteDialog({ teamId }: InviteDialogProps) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter email address"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="wallet" className="text-right">
+              Wallet Address
+            </Label>
+            <Input
+              id="wallet"
+              type="text"
+              className="col-span-3"
+              value={walletAddress}
+              onChange={(e) => setWalletAddress(e.target.value)}
+              placeholder="Enter wallet address "
             />
           </div>
         </div>
